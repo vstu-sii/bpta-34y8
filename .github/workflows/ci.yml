@@ -45,18 +45,18 @@ jobs:
         run: ruff format --check .
 
   build:
-  name: Build
-  runs-on: ubuntu-latest
+    name: Build
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Create environment file
-      run: cp .env.example .env
+      - name: Create environment file
+        run: cp .env.example .env
 
-    - name: Check Docker Compose configuration
-      run: docker compose -f compose.dev.yml config
+      - name: Check Docker Compose configuration
+        run: docker compose -f compose.dev.yml config
 
-    - name: Check Python sources
-      run: python -m compileall src
+      - name: Check Python sources
+        run: python -m compileall src
