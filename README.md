@@ -1,5 +1,9 @@
 # БПТА
 
+[![CI](https://github.com/vstu-sii/bpta-34y8/actions/workflows/ci.yml/badge.svg)](https://github.com/vstu-sii/bpta-34y8/actions/workflows/ci.yml)
+
+
+
 Учебный командный проект по дисциплине «Системы искусственного интеллекта».
 
 ## О проекте
