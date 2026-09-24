@@ -1,0 +1,25 @@
+services:
+
+  app:
+    image: python:3.12-slim
+    container_name: bpta-app-dev
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    command: >
+      sh -c "echo 'Application development container is running' &&
+             tail -f /dev/null"
+
+  agent:
+    image: python:3.12-slim
+    container_name: bpta-agent-dev
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    command: >
+      sh -c "echo 'AI agent development container is running' &&
+             tail -f /dev/null"
