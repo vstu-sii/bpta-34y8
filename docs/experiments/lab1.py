@@ -305,7 +305,9 @@ def build_user_prompt(chunk: dict[str, Any]) -> str:
 
 
 def call_ollama(chunk: dict[str, Any]) -> dict[str, Any]:
-    """Передаёт фрагмент локальной модели Ollama."""
+    """
+    Передаёт один фрагмент текста локальной модели Ollama.
+    """
 
     payload = {
         "model": OLLAMA_MODEL,
@@ -345,15 +347,18 @@ def call_ollama(chunk: dict[str, Any]) -> dict[str, Any]:
     except requests.JSONDecodeError as error:
         raise RuntimeError("Ollama вернула некорректный HTTP JSON.") from error
 
+    if not isinstance(response_data, dict):
+        raise TypeError("Ответ Ollama должен быть JSON-объектом.")
+
     message = response_data.get("message")
 
     if not isinstance(message, dict):
-        raise RuntimeError("Ollama вернула ответ неизвестного формата.")
+        raise TypeError("Поле message в ответе Ollama должно быть объектом.")
 
     content = message.get("content")
 
     if not isinstance(content, str):
-        raise RuntimeError("В ответе Ollama отсутствует текст модели.")
+        raise TypeError("Поле message.content в ответе Ollama должно быть строкой.")
 
     try:
         model_result = json.loads(content)
@@ -361,7 +366,12 @@ def call_ollama(chunk: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("Модель вернула некорректный JSON.") from error
 
     if not isinstance(model_result, dict):
-        raise RuntimeError("Модель вернула JSON неправильного типа.")
+        raise TypeError("Результат модели должен быть JSON-объектом.")
+
+    cards = model_result.get("cards")
+
+    if not isinstance(cards, list):
+        raise TypeError("Поле cards в результате модели должно быть списком.")
 
     return model_result
 
@@ -563,7 +573,7 @@ def generate_cards(text: str) -> list[dict[str, Any]]:
 
         try:
             model_result = call_ollama(chunk)
-        except RuntimeError as error:
+        except (RuntimeError, TypeError) as error:
             print(f"   Ошибка пропущенного фрагмента: {error}")
             continue
 
