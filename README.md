@@ -33,16 +33,32 @@
 - `src/agent/` — логика ИИ-агента
 - `src/model/` — взаимодействие с моделью
 - `src/app/` — основная логика приложения
+- `src/app/main.py` — точка входа приложения
 - `tests/` — тесты проекта
 - `docs/` — документация
+- `docs/brief.md` — описание проблемы и проекта
+- `docs/prd.md` — продуктовые требования
+- `docs/research.md`, `docs/insights.md`, `docs/hypotheses.md` — исследование, выводы и гипотезы
+- `docs/glossary.md` — словарь терминов проекта
+- `docs/model-candidates.md` — кандидаты моделей и их сравнение
+- `docs/experiments/` — описания и код экспериментов
+- `docs/quality/` — критерии успеха, черновик DoD и план эталонного набора данных
+- `docs/pictures/` — изображения для документации
 - `config/` — конфигурационные файлы
 - `.github/` — шаблоны и настройки GitHub
 - `.github/PULL_REQUEST_TEMPLATE.md` — шаблон описания Pull Request
+- `.github/workflows/ci.yml` — проверки CI
+- `Dockerfile` — сборка контейнера приложения
+- `compose.yml` — стандартная точка входа Docker Compose, подключает dev-конфигурацию
 - `compose.dev.yml` — конфигурация Docker Compose для dev-окружения
 - `.env.example` — пример переменных окружения
 - `.gitignore` — список файлов и каталогов, которые не должны попадать в Git
 - `CONTRIBUTING.md` — правила работы с репозиторием
+- `AGENTS.md` — инструкции для агента и привязка проекта к курсу Disputa
+- `disputa.ps1` — запуск Disputa с закреплённым курсом проекта
 - `README.md` — описание проекта и инструкция по запуску
+
+Каталоги `src/agent/`, `src/model/`, `tests/` и `config/` пока пустые; Git не сохраняет пустые каталоги.
 
 ### Требования
 
@@ -70,6 +86,8 @@ Copy-Item .env.example .env
 ```powershell
 docker compose -f compose.dev.yml up -d
 ```
+
+Также доступен запуск через стандартный `compose.yml`: `docker compose up -d`.
 
 проверка состояния сервисов:
 
