@@ -1,0 +1,594 @@
+openapi: 3.1.0
+info:
+  title: Flashcards AI Service API
+  version: 0.2.0
+  description: |
+    Внутренний контракт между backend и AI-сервисом.
+    AI-сервис не принимает файлы: backend передаёт уже извлечённые фрагменты
+    с устойчивыми идентификаторами и положением в документе.
+servers:
+  - url: http://ai-service:8000
+    description: Dev-сеть Compose
+
+tags:
+  - name: Generation
+  - name: Evaluation
+  - name: Repair
+
+paths:
+  /ai/v1/card-generation-jobs:
+    post:
+      tags: [Generation]
+      summary: Создать задание генерации карточек
+      operationId: createCardGenerationJob
+      security:
+        - serviceBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGenerationJobRequest"
+      responses:
+        "202":
+          description: Задание принято в очередь
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          description: Передано слишком много фрагментов или слишком большой текст
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /ai/v1/card-generation-jobs/{job_id}:
+    get:
+      tags: [Generation]
+      summary: Получить состояние и результат генерации
+      operationId: getCardGenerationJob
+      security:
+        - serviceBearer: []
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Состояние задания
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationJob"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /ai/v1/answers/evaluate:
+    post:
+      tags: [Evaluation]
+      summary: Оценить свободный ответ студента
+      operationId: evaluateAnswer
+      security:
+        - serviceBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluateAnswerRequest"
+      responses:
+        "200":
+          description: Результат оценки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerEvaluation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/ModelUnavailable"
+
+  /ai/v1/cards/repair:
+    post:
+      tags: [Repair]
+      summary: Исправить отклонённую карточку ограниченным циклом
+      description: Выполняется не более двух модельных попыток и повторная валидация.
+      operationId: repairCard
+      security:
+        - serviceBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepairCardRequest"
+      responses:
+        "200":
+          description: Карточка исправлена и прошла проверку
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepairCardResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          description: Карточка не прошла проверку после разрешённого числа попыток
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepairCardResponse"
+
+components:
+  securitySchemes:
+    serviceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+
+  parameters:
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Ошибка входных данных
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Не передан или неверен внутренний токен сервиса
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: Очередь временно заполнена
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+          description: Время ожидания в секундах
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ModelUnavailable:
+      description: Основная и резервная модели недоступны
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    CreateGenerationJobRequest:
+      type: object
+      additionalProperties: false
+      required: [document_id, prompt_version, chunks]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        prompt_version:
+          type: string
+          pattern: "^cards-v[0-9]+$"
+          example: cards-v2
+        requested_types:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CardType"
+          default: [short_qa, summary, formula]
+        chunks:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/SourceChunk"
+
+    SourceChunk:
+      type: object
+      additionalProperties: false
+      required: [chunk_id, source_locator, text]
+      properties:
+        chunk_id:
+          type: integer
+          minimum: 1
+        source_page:
+          type: [integer, "null"]
+          minimum: 1
+        source_locator:
+          type: string
+          minLength: 1
+          maxLength: 200
+        text:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
+    JobAccepted:
+      type: object
+      additionalProperties: false
+      required: [job_id, status, created_at]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          const: queued
+        created_at:
+          type: string
+          format: date-time
+
+    GenerationJob:
+      type: object
+      additionalProperties: false
+      required:
+        - job_id
+        - document_id
+        - status
+        - total_chunks
+        - completed_chunks
+        - cards
+        - chunk_errors
+        - usage
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        document_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, partial, failed]
+        model:
+          type: [string, "null"]
+          example: gemma4:31b
+        fallback_used:
+          type: boolean
+          default: false
+        total_chunks:
+          type: integer
+          minimum: 1
+        completed_chunks:
+          type: integer
+          minimum: 0
+        cards:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        chunk_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChunkError"
+        usage:
+          $ref: "#/components/schemas/Usage"
+
+    CardType:
+      type: string
+      enum: [short_qa, summary, formula]
+
+    CardBase:
+      type: object
+      required:
+        - card_type
+        - question
+        - answer
+        - source_fragment
+        - variables
+        - source_page
+        - source_locator
+        - chunk_id
+        - approval_status
+      properties:
+        card_type:
+          $ref: "#/components/schemas/CardType"
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+        answer:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        source_fragment:
+          type: string
+          minLength: 1
+          maxLength: 3000
+        source_page:
+          type: [integer, "null"]
+          minimum: 1
+        source_locator:
+          type: string
+          minLength: 1
+          maxLength: 200
+        chunk_id:
+          type: integer
+          minimum: 1
+        approval_status:
+          const: pending
+
+    ShortQaCard:
+      allOf:
+        - $ref: "#/components/schemas/CardBase"
+        - type: object
+          required: [formula, variables]
+          properties:
+            card_type:
+              const: short_qa
+            formula:
+              type: "null"
+            variables:
+              type: array
+              maxItems: 0
+      unevaluatedProperties: false
+
+    SummaryCard:
+      allOf:
+        - $ref: "#/components/schemas/CardBase"
+        - type: object
+          required: [formula, variables]
+          properties:
+            card_type:
+              const: summary
+            formula:
+              type: "null"
+            variables:
+              type: array
+              maxItems: 0
+      unevaluatedProperties: false
+
+    FormulaCard:
+      allOf:
+        - $ref: "#/components/schemas/CardBase"
+        - type: object
+          required: [formula, variables]
+          properties:
+            card_type:
+              const: formula
+            formula:
+              type: string
+              minLength: 1
+              maxLength: 500
+            variables:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                minLength: 1
+                maxLength: 300
+      unevaluatedProperties: false
+
+    Card:
+      oneOf:
+        - $ref: "#/components/schemas/ShortQaCard"
+        - $ref: "#/components/schemas/SummaryCard"
+        - $ref: "#/components/schemas/FormulaCard"
+      discriminator:
+        propertyName: card_type
+        mapping:
+          short_qa: "#/components/schemas/ShortQaCard"
+          summary: "#/components/schemas/SummaryCard"
+          formula: "#/components/schemas/FormulaCard"
+
+    Usage:
+      type: object
+      additionalProperties: false
+      required: [prompt_tokens, completion_tokens, total_tokens, latency_ms]
+      properties:
+        prompt_tokens:
+          type: integer
+          minimum: 0
+        completion_tokens:
+          type: integer
+          minimum: 0
+        total_tokens:
+          type: integer
+          minimum: 0
+        latency_ms:
+          type: integer
+          minimum: 0
+
+    ChunkError:
+      type: object
+      additionalProperties: false
+      required: [chunk_id, code, message, retryable]
+      properties:
+        chunk_id:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+          enum:
+            - invalid_json
+            - validation_failed
+            - timeout
+            - rate_limited
+            - model_unavailable
+        message:
+          type: string
+        retryable:
+          type: boolean
+
+    EvaluateAnswerRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - card_id
+        - question
+        - reference_answer
+        - source_fragment
+        - student_answer
+      properties:
+        card_id:
+          type: string
+          format: uuid
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+        reference_answer:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        source_fragment:
+          type: string
+          minLength: 1
+          maxLength: 3000
+        required_points:
+          type: array
+          maxItems: 4
+          items:
+            type: string
+            minLength: 1
+            maxLength: 300
+        student_answer:
+          type: string
+          minLength: 1
+          maxLength: 3000
+
+    AnswerEvaluation:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - explanation
+        - matched_points
+        - missing_points
+        - factual_errors
+        - confidence
+        - requires_self_check
+        - usage
+      properties:
+        status:
+          type: string
+          enum: [correct, partially_correct, incorrect]
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        matched_points:
+          type: array
+          items:
+            type: string
+        missing_points:
+          type: array
+          items:
+            type: string
+        factual_errors:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        requires_self_check:
+          type: boolean
+          description: Истина при низкой уверенности или пограничном решении.
+        usage:
+          $ref: "#/components/schemas/Usage"
+
+    ValidationErrorCode:
+      type: string
+      enum:
+        - invalid_type
+        - empty_question
+        - empty_answer
+        - quote_not_found
+        - formula_not_found
+        - missing_variables
+        - formula_wrong_type
+        - duplicate_candidate
+
+    RepairCardRequest:
+      type: object
+      additionalProperties: false
+      required: [source_chunk, rejected_card, validation_errors]
+      properties:
+        source_chunk:
+          $ref: "#/components/schemas/SourceChunk"
+        rejected_card:
+          type: object
+          description: Сырой объект модели до принятия валидатором.
+          additionalProperties: true
+        validation_errors:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ValidationErrorCode"
+        max_attempts:
+          type: integer
+          minimum: 1
+          maximum: 2
+          default: 1
+
+    RepairCardResponse:
+      type: object
+      additionalProperties: false
+      required: [status, attempts_used, remaining_errors, usage]
+      properties:
+        status:
+          type: string
+          enum: [repaired, rejected]
+        attempts_used:
+          type: integer
+          minimum: 1
+          maximum: 2
+        card:
+          oneOf:
+            - $ref: "#/components/schemas/Card"
+            - type: "null"
+        remaining_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationErrorCode"
+        usage:
+          $ref: "#/components/schemas/Usage"
+
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail, request_id]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        request_id:
+          type: string
+          format: uuid
+
