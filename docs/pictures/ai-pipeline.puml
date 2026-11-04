@@ -1,0 +1,87 @@
+@startuml
+title AI-пайплайн генерации учебных карточек
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam activity {
+  BackgroundColor #E8F2FF
+  BorderColor #2F5D8C
+  DiamondBackgroundColor #FFF4CC
+  DiamondBorderColor #9A7610
+  FontColor #172B3A
+}
+skinparam ArrowColor #445B6E
+
+start
+
+partition "Backend" {
+  :1. Приём TXT, MD или PDF;
+  if (Формат, размер и содержимое\nдопустимы?) then (да)
+    :2. Извлечение текста\nпо страницам или блокам;
+    :3. Очистка и нормализация;
+    :4. Разбиение на фрагменты\nдо 5 000 символов;
+  else (нет)
+    :Отклонить документ\nи вернуть ошибку входных данных;
+    stop
+  endif
+}
+
+repeat
+  partition "AI-сервис" {
+    :5. Сформировать system + user prompt;
+    :Записать request_id, chunk_id,\nмодель и версию промпта;
+  }
+
+  partition "Модель" {
+    :6. Запрос к Ollama Cloud\ngemma4:31b;
+  }
+
+  if (HTTP-ответ успешен?) then (да)
+  else (нет)
+    if (401 или 403?) then (да)
+      :Остановить задание:\nошибка конфигурации ключа;
+      stop
+    else (нет)
+      if (Квота исчерпана или\nоблако недоступно?) then (да)
+        partition "Модель" {
+          :Переключить фрагмент на\nлокальную qwen3.5:4b;
+        }
+      else (нет)
+        :Повторить с backoff\nне более двух раз;
+      endif
+    endif
+  endif
+
+  partition "AI-сервис" {
+    :7. Разобрать ответ как JSON;
+  }
+
+  if (JSON соответствует контракту?) then (да)
+    partition "Валидатор" {
+      :8. Проверить типы, обязательные поля,\nцитату, формулу и переменные;
+    }
+    if (Карточка прошла проверку?) then (да)
+      :Добавить карточку\nв принятые;
+    else (нет)
+      :Отклонить карточку\nи записать код причины;
+    endif
+  else (нет)
+    :Один повтор модельного запроса;
+    :При повторной ошибке пропустить фрагмент\nи записать chunk_error=invalid_json;
+  endif
+
+repeat while (Остались фрагменты?) is (да) not (нет)
+
+partition "AI-сервис" {
+  :9. Объединить результаты\nи удалить точные дубли;
+  :Определить итог задания:\ncompleted / partial / failed;
+}
+
+partition "Backend" {
+  :10. Сохранить карточки\nс approval_status=pending;
+  :Показать карточки, источники,\nпрогресс и ошибки фрагментов;
+}
+
+stop
+@enduml
