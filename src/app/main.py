@@ -8,13 +8,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         if self.path == "/health":
             response = {
                 "status": "ok",
-                "service": "bpta-34y8",
+                "service": os.getenv("APP_SERVICE", "bpta-34y8"),
             }
         else:
             response = {
-                "message": "Hello, world!",
-                "service": "bpta-34y8",
-                "status": "running",
+                "message": "Lab 2 placeholder; business endpoints are not implemented",
+                "service": os.getenv("APP_SERVICE", "bpta-34y8"),
+                "status": "stub",
             }
 
         body = json.dumps(response).encode("utf-8")

@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Container>
+title БПТА — целевые контейнеры MVP; лаба 2 содержит заглушки
+Person(student, "Студент", "Владелец конспектов и карточек")
+System_Ext(llm, "Провайдер модели", "Ollama / облачный провайдер")
+System_Boundary(bpta, "Карточки для повторения") {
+  Container(web, "Интерфейс", "HTML, CSS, JavaScript", "Загрузка, одобрение и повторение")
+  Container(app, "API приложения", "Python", "Задания, карточки, расписание; единственный владелец данных")
+  Container(agent, "AI-сервис", "Python", "Адаптер провайдера; без доступа к БД", $tags="acl")
+  ContainerDb(db, "База приложения", "PostgreSQL 16", "Тексты, карточки, ответы и события")
+}
+Rel(student, web, "Открывает интерфейс", "HTTP(S)")
+Rel(web, app, "Передаёт конспект, вопросы и ответы; получает карточки", "HTTP(S)/JSON")
+Rel(app, db, "Читает и сохраняет данные владельца", "SQL/TCP 5432")
+Rel(app, agent, "Передаёт ограниченный контекст; получает JSON", "HTTP/JSON ai-service:8000")
+Rel(agent, llm, "Вызывает модель с таймаутом и лимитами", "HTTP(S)/JSON")
+@enduml

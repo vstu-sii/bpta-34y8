@@ -4,8 +4,51 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
+  architecture:
+    name: Architecture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check C4 architecture
+        run: |
+          npm ci --ignore-scripts
+          npm run check:architecture
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r scripts/requirements.txt
+      - name: Render PlantUML diagrams locally
+        run: >-
+          docker run --rm -v "${PWD}:/work" -w /work
+          plantuml/plantuml@sha256:9b5071ab56a4192aac458ab4b0d42261c22c8109695894ae5be6013c3be6cac1
+          -tsvg docs/architecture/c4-context.puml docs/architecture/c4-container.puml database/erd.puml
+      - run: python scripts/check-delivery.py
+
+  prototype:
+    name: Prototype
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run check:prototype
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prototype-screenshots
+          path: frontend/prototype/screenshots/
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -20,7 +63,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Ruff
-        run: pip install ruff
+        run: pip install ruff==0.16.8
 
       - name: Run lint
         run: ruff check .
@@ -39,7 +82,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Ruff
-        run: pip install ruff
+        run: pip install ruff==0.16.8
 
       - name: Check formatting
         run: ruff format --check .
@@ -52,11 +95,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create environment file
-        run: cp .env.example .env
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Check Docker Compose configuration
-        run: docker compose -f compose.dev.yml config
+      - name: Check isolated development stack and SQL constraints
+        run: python scripts/check-compose.py
 
       - name: Check Python sources
         run: python -m compileall src

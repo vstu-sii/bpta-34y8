@@ -14,3 +14,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local dependencies and project backups
+node_modules/
+project-backup-*.zip

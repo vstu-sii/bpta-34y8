@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Flashcards AI Service API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Внутренний контракт между backend и AI-сервисом.
     AI-сервис не принимает файлы: backend передаёт уже извлечённые фрагменты
@@ -203,6 +203,18 @@ components:
           items:
             $ref: "#/components/schemas/CardType"
           default: [short_qa, summary, formula]
+        exam_questions:
+          type: array
+          description: |
+            Необязательное расширение Delivery: вопросы зачёта для отбора
+            карточек. Это недоверенные данные, а не доказательный источник.
+            Если ответа во фрагментах нет, карточка по вопросу не создаётся.
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 500
         chunks:
           type: array
           minItems: 1
@@ -591,4 +603,3 @@ components:
         request_id:
           type: string
           format: uuid
-

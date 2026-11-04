@@ -1,0 +1,9 @@
+.git
+.env
+*.zip
+node_modules
+__pycache__
+.ruff_cache
+docs
+frontend
+database

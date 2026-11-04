@@ -1,0 +1,91 @@
+@startuml
+title БПТА — проект схемы PostgreSQL
+hide circle
+skinparam linetype ortho
+entity student {
+  * id : uuid <<PK>>
+  --
+  external_subject : text <<UNIQUE>>
+}
+entity document {
+  * id : uuid <<PK>>
+  --
+  student_id : uuid <<FK>>
+  title : text
+  source_text : text
+}
+entity exam_question {
+  * id : uuid <<PK>>
+  --
+  document_id : uuid <<FK>>
+  question : text
+}
+entity source_chunk {
+  * id : uuid <<PK>>
+  --
+  document_id : uuid <<FK>>
+  sequence_no : integer <<API chunk_id>>
+  source_locator : text
+  page_number : integer
+  start_offset : integer
+  end_offset : integer
+  content : text
+}
+entity generation_job {
+  * id : uuid <<PK>>
+  --
+  document_id : uuid <<FK>>
+  idempotency_key : text <<UNIQUE with document_id>>
+  status : text
+}
+entity card {
+  * id : uuid <<PK>>
+  --
+  document_id : uuid <<FK>>
+  source_chunk_id : uuid <<FK>>
+  generation_job_id : uuid <<FK, nullable>>
+  card_type : text
+  formula : text <<nullable>>
+  variables : jsonb
+  question : text
+  reference_answer : text
+  source_quote : text
+  status : text
+}
+entity review_schedule {
+  * card_id : uuid <<PK, FK>>
+  --
+  next_due_at : timestamptz
+  interval_days : integer
+  repetitions : integer
+}
+entity review {
+  * id : uuid <<PK>>
+  --
+  card_id : uuid <<FK>>
+  answer : text
+  result : text
+  assessed_by : text
+  model_result : text
+  model_confidence : double
+  requires_self_check : boolean
+  disputed : boolean
+}
+entity quality_event {
+  * id : uuid <<PK>>
+  --
+  document_id : uuid <<FK>>
+  event_type : text
+  payload : jsonb
+}
+student ||--o{ document
+document ||--o{ exam_question
+document ||--o{ source_chunk
+document ||--o{ generation_job
+document ||--o{ card
+source_chunk ||--o{ card
+generation_job |o--o{ card
+card ||--o| review_schedule
+card ||--o{ review
+document ||--o{ quality_event
+@enduml
