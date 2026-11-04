@@ -2101,7 +2101,7 @@ def main() -> int:
         TypeError,
         ValueError,
     ) as error:
-        print(f"Эксперимент остановлен: {error}")
+        print(f"Эксперимент остановлен:  {error}")
         return 1
 
 
