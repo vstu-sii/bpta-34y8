@@ -23,7 +23,7 @@
 | D5 | Delivery / data | ERD PlantUML соответствует SQL; схема применяется к пустой PostgreSQL 16; есть порядок следующих миграций | `database/schema.sql`, `erd.puml`, `migrations/`; проверка ограничений |
 | D6 | Delivery / compose | Все заглушки стартуют через `up --wait`; сети, volume и health checks есть; HTTP и SQL smoke проходят | `compose.dev.yml`, лог запуска без секретов |
 | Q1 | Quality / DoD | В таблице охвачены все 16 ролевых шагов задания; у каждого критерия путь и способ проверки | Этот документ; review Product и команды |
-| Q2 | Quality / dataset | 30–50 уникальных входов и эталонов; версии, происхождение, рубрики, края и контекст; валидатор возвращает 0 | `golden-dataset/cases.jsonl`, schema, README, `validation.json` |
+| Q2 | Quality / dataset | 30–50 уникальных входов и эталонов; каждый UC и его альтернативы/исключения связаны с кейсами; версии, происхождение, рубрики, контекст, читаемый UTF-8; валидатор возвращает 0 | `../use-cases/README.md`, `golden-dataset/traceability.json`, `cases.jsonl`, schema, README, `validation.json`; review эталонов фиксируется отдельно |
 | Q3 | Quality / test plan | Есть unit, интеграция, evals; команды CI лабы 3; условия остановки, владельцы, среды, метрики | `test-plan.md` |
 | Q4 | Quality / threats | Все 10 OWASP LLM рисков рассмотрены; входы, границы доверия и права модели описаны; есть план атак лабы 4 | `threat-model.md` |
 

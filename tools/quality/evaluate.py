@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import re
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -41,6 +42,79 @@ def contract_validator(name):
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
+def validate_traceability(rows, trace, document):
+    """Fail if any documented branch or frozen case loses its coverage link."""
+    indexed = {row["id"]: row for row in rows}
+    expected_ucs = {row["uc_id"] for row in rows}
+    require(trace["dataset_version"] == rows[0]["version"], "Traceability version")
+    headings = set(re.findall(r"^### (QS-UC-\d{2}-[MAE]\d+)$", document, re.MULTILINE))
+    require(bool(headings), "No documented UC branches")
+    ids, covered, ucs = set(), set(), set()
+    counts = Counter()
+    for branch in trace["branches"]:
+        branch_id, uc = branch["id"], branch["uc_id"]
+        require(branch_id not in ids, f"Duplicate branch {branch_id}")
+        ids.add(branch_id)
+        require(branch_id in headings, f"Undocumented branch {branch_id}")
+        require(uc in expected_ucs, f"Unknown UC {uc}")
+        require(branch_id.startswith(uc + "-"), f"Branch/UC mismatch {branch_id}")
+        kind = {"M": "main", "A": "alternative", "E": "exception"}[
+            branch_id.split("-")[-1][0]
+        ]
+        require(branch["kind"] == kind, f"Branch kind {branch_id}")
+        counts[kind] += 1
+        ucs.add(uc)
+        cases = branch["cases"]
+        require(bool(cases), f"Uncovered branch {branch_id}")
+        require(len(cases) == len(set(cases)), f"Duplicate case link {branch_id}")
+        require(set(cases) <= indexed.keys(), f"Unknown case in {branch_id}")
+        linked = [indexed[case] for case in cases]
+        require(all(row["uc_id"] == uc for row in linked), f"Wrong UC case {branch_id}")
+        for field, actual in (
+            ("categories", {row["category"] for row in linked}),
+            ("tasks", {row["task"] for row in linked}),
+            (
+                "statuses",
+                {
+                    row["expected"]["status"]
+                    for row in linked
+                    if "status" in row["expected"]
+                },
+            ),
+        ):
+            require(set(branch[field]) == actual, f"Branch {field} {branch_id}")
+        covered.update(cases)
+    require(ids == headings, "Documented branch missing from traceability")
+    require(covered == indexed.keys(), "Case missing from traceability")
+    require(ucs == expected_ucs, "UC missing from traceability")
+    for uc in ucs:
+        require(
+            any(b["uc_id"] == uc and b["kind"] == "main" for b in trace["branches"]),
+            f"No main flow {uc}",
+        )
+        require(
+            any(b["uc_id"] == uc and b["kind"] != "main" for b in trace["branches"]),
+            f"No alternative/exception {uc}",
+        )
+    return {
+        "use_cases": len(ucs),
+        "branches": len(ids),
+        "covered_cases": len(covered),
+        "branch_kinds": dict(counts),
+    }
+
+
+def validate_text_encoding(row):
+    encoded = json.dumps(row, ensure_ascii=False)
+    require(
+        "???" not in encoded and "\ufffd" not in encoded, f"Corrupted text {row['id']}"
+    )
+    require(
+        bool(re.search(r"[А-Яа-яЁё]", row["input"]["source"]["text"])),
+        f"Missing Russian source {row['id']}",
+    )
+
+
 def validate():
     rows = read_jsonl(DATA / "cases.jsonl")
     manifest = json.loads((DATA / "manifest.json").read_text("utf-8"))
@@ -58,6 +132,7 @@ def validate():
     inputs = set()
     for row in rows:
         checker.validate(row)
+        validate_text_encoding(row)
         case_id = row["id"]
         require(case_id not in seen, f"Duplicate ID {case_id}")
         seen.add(case_id)
@@ -112,6 +187,11 @@ def validate():
         {row["uc_id"] for row in rows} == {f"QS-UC-0{i}" for i in range(1, 6)},
         "UC coverage",
     )
+    trace = json.loads((DATA / "traceability.json").read_text("utf-8"))
+    require(trace["source"] == "docs/use-cases/README.md", "UC source path")
+    coverage = validate_traceability(
+        rows, trace, (ROOT / trace["source"]).read_text("utf-8")
+    )
     return rows, {
         "status": "PASS",
         "cases": len(rows),
@@ -119,6 +199,8 @@ def validate():
         "tasks": dict(tasks),
         "answer_labels": dict(labels),
         "categories": dict(Counter(row["category"] for row in rows)),
+        "traceability": coverage,
+        "reference_review": "pending human review; agent-assisted repaired fixtures",
         "scope": "Dataset/schema/contract fixtures only; no model or product tests",
     }
 

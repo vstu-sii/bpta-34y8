@@ -20,7 +20,7 @@
       "pattern": "^GD-[0-9]{3}$"
     },
     "version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "task": {
       "enum": [
@@ -55,7 +55,7 @@
           "const": "synthetic"
         },
         "author": {
-          "const": "Quality & Safety"
+          "const": "Quality & Safety / agent-assisted draft"
         },
         "rights": {
           "type": "string",
@@ -175,7 +175,7 @@
       "minLength": 1
     },
     "review_status": {
-      "const": "single_author_review"
+      "const": "pending_human_review"
     }
   },
   "allOf": [

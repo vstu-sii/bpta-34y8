@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "cases": 40,
-  "sha256": "2b6ce4aeb5ebbef774a503a23b61ffed33bddd3488606d6fba7f23770fc734a7",
+  "sha256": "ed3333ff8ab769d249ec49259d537c0ea87c82e5fb4750bdbfedd6071ae07d40",
   "tasks": {
     "generate": 16,
     "abstain": 4,
@@ -30,6 +30,17 @@
     "partial_answer": 4,
     "wrong_answer": 4
   },
+  "traceability": {
+    "use_cases": 5,
+    "branches": 19,
+    "covered_cases": 40,
+    "branch_kinds": {
+      "main": 5,
+      "alternative": 9,
+      "exception": 5
+    }
+  },
+  "reference_review": "pending human review; agent-assisted repaired fixtures",
   "scope": "Dataset/schema/contract fixtures only; no model or product tests",
-  "checked_at": "2026-11-04T20:52:08.326675+00:00"
+  "checked_at": "2026-11-05T18:17:06.472856+00:00"
 }

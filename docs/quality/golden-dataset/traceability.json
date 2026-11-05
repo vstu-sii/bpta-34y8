@@ -1,0 +1,327 @@
+{
+  "version": "1.0.0",
+  "dataset_version": "1.1.0",
+  "source": "docs/use-cases/README.md",
+  "branches": [
+    {
+      "id": "QS-UC-01-M1",
+      "uc_id": "QS-UC-01",
+      "kind": "main",
+      "cases": [
+        "GD-001",
+        "GD-002",
+        "GD-003",
+        "GD-004",
+        "GD-005",
+        "GD-006"
+      ],
+      "categories": [
+        "comparison",
+        "definition",
+        "process"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-01-A1",
+      "uc_id": "QS-UC-01",
+      "kind": "alternative",
+      "cases": [
+        "GD-015"
+      ],
+      "categories": [
+        "noisy_text"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-01-A2",
+      "uc_id": "QS-UC-01",
+      "kind": "alternative",
+      "cases": [
+        "GD-016"
+      ],
+      "categories": [
+        "unicode"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-02-M1",
+      "uc_id": "QS-UC-02",
+      "kind": "main",
+      "cases": [
+        "GD-007",
+        "GD-010"
+      ],
+      "categories": [
+        "formula"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-02-A1",
+      "uc_id": "QS-UC-02",
+      "kind": "alternative",
+      "cases": [
+        "GD-008"
+      ],
+      "categories": [
+        "formula"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-02-A2",
+      "uc_id": "QS-UC-02",
+      "kind": "alternative",
+      "cases": [
+        "GD-009"
+      ],
+      "categories": [
+        "formula"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-03-M1",
+      "uc_id": "QS-UC-03",
+      "kind": "main",
+      "cases": [
+        "GD-017"
+      ],
+      "categories": [
+        "missing_answer"
+      ],
+      "tasks": [
+        "abstain"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-03-A1",
+      "uc_id": "QS-UC-03",
+      "kind": "alternative",
+      "cases": [
+        "GD-018"
+      ],
+      "categories": [
+        "missing_answer"
+      ],
+      "tasks": [
+        "abstain"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-03-E1",
+      "uc_id": "QS-UC-03",
+      "kind": "exception",
+      "cases": [
+        "GD-019"
+      ],
+      "categories": [
+        "conflicting_info"
+      ],
+      "tasks": [
+        "abstain"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-04-M1",
+      "uc_id": "QS-UC-04",
+      "kind": "main",
+      "cases": [
+        "GD-021",
+        "GD-022",
+        "GD-023",
+        "GD-024",
+        "GD-025",
+        "GD-026",
+        "GD-027",
+        "GD-028",
+        "GD-029"
+      ],
+      "categories": [
+        "paraphrase"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "correct"
+      ]
+    },
+    {
+      "id": "QS-UC-04-A1",
+      "uc_id": "QS-UC-04",
+      "kind": "alternative",
+      "cases": [
+        "GD-031",
+        "GD-032",
+        "GD-033",
+        "GD-034"
+      ],
+      "categories": [
+        "partial_answer"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "partially_correct"
+      ]
+    },
+    {
+      "id": "QS-UC-04-E1",
+      "uc_id": "QS-UC-04",
+      "kind": "exception",
+      "cases": [
+        "GD-036",
+        "GD-037",
+        "GD-038",
+        "GD-039"
+      ],
+      "categories": [
+        "wrong_answer"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "incorrect"
+      ]
+    },
+    {
+      "id": "QS-UC-05-M1",
+      "uc_id": "QS-UC-05",
+      "kind": "main",
+      "cases": [
+        "GD-011",
+        "GD-014"
+      ],
+      "categories": [
+        "instruction_in_source"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-05-A1",
+      "uc_id": "QS-UC-05",
+      "kind": "alternative",
+      "cases": [
+        "GD-012"
+      ],
+      "categories": [
+        "instruction_in_question"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-05-A2",
+      "uc_id": "QS-UC-05",
+      "kind": "alternative",
+      "cases": [
+        "GD-013"
+      ],
+      "categories": [
+        "markup_in_source"
+      ],
+      "tasks": [
+        "generate"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-05-E1",
+      "uc_id": "QS-UC-05",
+      "kind": "exception",
+      "cases": [
+        "GD-020"
+      ],
+      "categories": [
+        "instruction_without_evidence"
+      ],
+      "tasks": [
+        "abstain"
+      ],
+      "statuses": []
+    },
+    {
+      "id": "QS-UC-05-A3",
+      "uc_id": "QS-UC-05",
+      "kind": "alternative",
+      "cases": [
+        "GD-030"
+      ],
+      "categories": [
+        "answer_injection"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "correct"
+      ]
+    },
+    {
+      "id": "QS-UC-05-E2",
+      "uc_id": "QS-UC-05",
+      "kind": "exception",
+      "cases": [
+        "GD-035"
+      ],
+      "categories": [
+        "answer_injection"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "partially_correct"
+      ]
+    },
+    {
+      "id": "QS-UC-05-E3",
+      "uc_id": "QS-UC-05",
+      "kind": "exception",
+      "cases": [
+        "GD-040"
+      ],
+      "categories": [
+        "answer_injection"
+      ],
+      "tasks": [
+        "evaluate"
+      ],
+      "statuses": [
+        "incorrect"
+      ]
+    }
+  ]
+}

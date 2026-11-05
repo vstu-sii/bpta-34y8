@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "file": "cases.jsonl",
-  "sha256": "2b6ce4aeb5ebbef774a503a23b61ffed33bddd3488606d6fba7f23770fc734a7",
+  "sha256": "ed3333ff8ab769d249ec49259d537c0ea87c82e5fb4750bdbfedd6071ae07d40",
   "cases": 40,
-  "source": "Original synthetic examples, created 2026-11-04",
-  "review": "single author; Product and independent review pending"
+  "source": "Original synthetic agent-assisted fixtures, repaired 2026-11-05; supersedes corrupted 1.0.0",
+  "review": "pending human review; not independently verified"
 }

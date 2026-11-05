@@ -100,5 +100,76 @@ class ScorerTests(unittest.TestCase):
         self.assertEqual(self.run_score()["status"], "FAIL")
 
 
+class TraceabilityTests(unittest.TestCase):
+    def setUp(self):
+        self.rows = evaluate.read_jsonl(evaluate.DATA / "cases.jsonl")
+        self.trace = json.loads(
+            (evaluate.DATA / "traceability.json").read_text("utf-8")
+        )
+        self.document = (evaluate.ROOT / self.trace["source"]).read_text("utf-8")
+
+    def check(self):
+        return evaluate.validate_traceability(self.rows, self.trace, self.document)
+
+    def test_all_flows_and_cases_covered(self):
+        result = self.check()
+        self.assertEqual(result["covered_cases"], 40)
+        self.assertEqual(
+            result["branch_kinds"], {"main": 5, "alternative": 9, "exception": 5}
+        )
+
+    def test_removed_alternative_mapping_rejected(self):
+        self.trace["branches"].pop(1)
+        with self.assertRaisesRegex(ValueError, "missing from traceability"):
+            self.check()
+
+    def test_deleted_source_section_rejected(self):
+        self.document = self.document.replace(
+            "### QS-UC-03-E1", "### Removed conflict section"
+        )
+        with self.assertRaisesRegex(ValueError, "Undocumented branch"):
+            self.check()
+
+    def test_uncovered_branch_rejected(self):
+        self.trace["branches"][1]["cases"] = []
+        with self.assertRaisesRegex(ValueError, "Uncovered branch"):
+            self.check()
+
+    def test_unknown_case_rejected(self):
+        self.trace["branches"][1]["cases"] = ["GD-999"]
+        with self.assertRaisesRegex(ValueError, "Unknown case"):
+            self.check()
+
+    def test_wrong_uc_link_rejected(self):
+        self.trace["branches"][1]["cases"] = ["GD-019"]
+        with self.assertRaisesRegex(ValueError, "Wrong UC case"):
+            self.check()
+
+    def test_wrong_expected_category_rejected(self):
+        self.trace["branches"][1]["cases"] = ["GD-001"]
+        with self.assertRaisesRegex(ValueError, "Branch categories"):
+            self.check()
+
+    def test_wrong_evaluation_label_rejected(self):
+        self.trace["branches"][-1]["statuses"] = ["correct"]
+        with self.assertRaisesRegex(ValueError, "Branch statuses"):
+            self.check()
+
+    def test_stale_version_rejected(self):
+        self.trace["dataset_version"] = "1.0.0"
+        with self.assertRaisesRegex(ValueError, "Traceability version"):
+            self.check()
+
+    def test_question_mark_corruption_rejected(self):
+        self.rows[0]["input"]["source"]["text"] = "???? ??? ?????"
+        with self.assertRaisesRegex(ValueError, "Corrupted text"):
+            evaluate.validate_text_encoding(self.rows[0])
+
+    def test_unicode_replacement_rejected(self):
+        self.rows[0]["expected"]["card"]["answer"] = "\ufffd"
+        with self.assertRaisesRegex(ValueError, "Corrupted text"):
+            evaluate.validate_text_encoding(self.rows[0])
+
+
 if __name__ == "__main__":
     unittest.main()
