@@ -1,0 +1,161 @@
+{
+  "type": "user_provided_pdf",
+  "pdf_path": "docs/experiments/materials/Example.pdf",
+  "pdf_sha256": "b39259bac2eead660cac01010412d40a0560f105330a6881e50529528ad1afb9",
+  "page_count": 180,
+  "title": "Реализация вычислительно-интенсивных алгоритмов на гибридных системах с реконфигурируемыми сопроцессорами",
+  "material_authors": [
+    "А.Е. Андреев",
+    "В.А. Егунов",
+    "Д.Н. Жариков",
+    "В.А. Малолетков"
+  ],
+  "publisher": "ВолгГТУ",
+  "year": 2013,
+  "extraction": {
+    "snapshot": "sources/example-pages.json",
+    "sha256": "33903eb904a6b3a29c0bed8414b74f75d49ea95b7d14aa7e26ef325760a4ce0c",
+    "extractor": "pypdf 6.21.4"
+  },
+  "documents": {
+    "example-p008": {
+      "snapshot": "sources/example-p008.md",
+      "page": 8,
+      "sha256": "ee6917411cc107e4e7ce425e94f0816e9a8a170522b682a2d5736fb34425b115",
+      "raw_text_sha256": "7ebd845d42c0d42067eaef548ae309e17d8ebbe4a1648b8704f598338168417e",
+      "transcription": ""
+    },
+    "example-p009": {
+      "snapshot": "sources/example-p009.md",
+      "page": 9,
+      "sha256": "79c1c143545ef89341e2f4aa41e0641370bf33f46a3af1a89d0aaedb8d0ef44d",
+      "raw_text_sha256": "7f90ab46dce0e62b3bdb00da05ce0a7a8cda402172490192121c062f28d17c90",
+      "transcription": ""
+    },
+    "example-p010": {
+      "snapshot": "sources/example-p010.md",
+      "page": 10,
+      "sha256": "2e5c340c4610ab41e7674c513498f12141db77080087873dda816b2aa53e5a19",
+      "raw_text_sha256": "0a5a8ebf5ed587b2d43e718867573bd2f785be406c45d10858fb05576fa27bf1",
+      "transcription": ""
+    },
+    "example-p011": {
+      "snapshot": "sources/example-p011.md",
+      "page": 11,
+      "sha256": "3851467e8d8397cf9133a9cfcc109c4bef1e3ba8fc788466209d841960827a1a",
+      "raw_text_sha256": "b379355fb013d3a71da423b1038e1df434cc9b01e2531cf14a62adbc0922f6c9",
+      "transcription": ""
+    },
+    "example-p017": {
+      "snapshot": "sources/example-p017.md",
+      "page": 17,
+      "sha256": "a71b6621f884028503864a04eafa874a33c1b40cf218585bc575fac69d6daeff",
+      "raw_text_sha256": "c6a695ea36c5248c87419b2c795574f158a17adc06a44903445d8f4b20fe4529",
+      "transcription": ""
+    },
+    "example-p018": {
+      "snapshot": "sources/example-p018.md",
+      "page": 18,
+      "sha256": "a525c8ac649196d4b3ed8b519fcf33acb2050a08f6ce0961cc05ac299cfbb1c8",
+      "raw_text_sha256": "05e5bb5d73629e8cb4b386835207ccd1c694217a40f9092c4a7cea20ec381bee",
+      "transcription": ""
+    },
+    "example-p019": {
+      "snapshot": "sources/example-p019.md",
+      "page": 19,
+      "sha256": "dbcf107264e0529b611c542bbedd62a0483f30e1c01938d134b2de489fb4fad2",
+      "raw_text_sha256": "152eeb7c319701bfd05948808d75dac730a2b599beb046849b19688f7fe07380",
+      "transcription": ""
+    },
+    "example-p021": {
+      "snapshot": "sources/example-p021.md",
+      "page": 21,
+      "sha256": "70b481c1690a5931a09843142ee802270bedeab332995283e42d1cd3e2a49ccf",
+      "raw_text_sha256": "6503528d723e53531ebe80dc8a867ea9923a0d77e4482e98c8e654cdd1ef6f85",
+      "transcription": ""
+    },
+    "example-p022": {
+      "snapshot": "sources/example-p022.md",
+      "page": 22,
+      "sha256": "a06ac3b70364d3fd75b8e582fa1182db9f7f0869863748fda38d181b1e98282e",
+      "raw_text_sha256": "90088377e638842766714eeb85aad4ab2b03491f106b3fe6c6690ecabb26228b",
+      "transcription": "Формула (2.1), нормализованная запись по изображению: t_comm = t_read + t_write. t_comm — время обмена между CPU и сопроцессором; t_read — время чтения из сопроцессора; t_write — время записи в сопроцессор. Обозначения приведены на странице 23.",
+      "image": "sources/formula-page-22.png",
+      "image_sha256": "7ada76ed239f7a5ae39f3f7fac3b0095f0b7f6dec065c3862424b79359c50128"
+    },
+    "example-p023": {
+      "snapshot": "sources/example-p023.md",
+      "page": 23,
+      "sha256": "e411a70a0b7fa529224524b9dcf07e1e4896f57129f6be157412285e9784aa99",
+      "raw_text_sha256": "776aeeb1996be5c4cc501618b7f029391fc5a2b1af1adafc9bef92361a4a3d41",
+      "transcription": "Формула (2.4), нормализованная запись по изображению: t_comp = (N_elements * N_operations_per_element) / (f_clock * throughput_process). t_comp — время вычислений; N_elements — количество элементов; N_operations_per_element — операций на элемент; f_clock — частота, тактов в секунду; throughput_process — операций за такт. Знаменатель должен быть положительным. Единица t_comp — секунда.",
+      "image": "sources/formula-page-23.png",
+      "image_sha256": "036774abf8f90196b1aaf6b5c329ed3a16bffc419f09caa8483f3d54037a7f22"
+    },
+    "example-p024": {
+      "snapshot": "sources/example-p024.md",
+      "page": 24,
+      "sha256": "46c1cf36cc365c0aa1428b379539d3abefe28987cee8c2d952ca6292261a71f1",
+      "raw_text_sha256": "07936c448e55e873c66833a9abb68143bc723f6ed7c47a7a853112d272103847",
+      "transcription": "Формулы (2.5) и (2.6), нормализованная запись по изображению: t_RC_SB = N_iterations * (t_comm + t_comp). t_RC_DB ≈ N_iterations * max(t_comm, t_comp). N_iterations — число итераций обмена и вычислений; t_comm — время обмена, t_comp — время вычислений. SB — одиночная буферизация без наложения обмена и вычислений; DB — двойная буферизация с их перекрытием. Для DB в книге указан приближённый знак, а не точное равенство.",
+      "image": "sources/formula-page-24.png",
+      "image_sha256": "0c20e8c7443762fad2ea4cda694ca10e3962e111d073968c0302c0ba888f67b8"
+    },
+    "example-p025": {
+      "snapshot": "sources/example-p025.md",
+      "page": 25,
+      "sha256": "d20274c71d29b71711474a7413c9f5823cd506128c232197f2cae1d131b06afa",
+      "raw_text_sha256": "8367d7a15a0383b0e9c1dce7724285180ea9057f10db8254f5c33a0d0e76db49",
+      "transcription": ""
+    },
+    "example-p055": {
+      "snapshot": "sources/example-p055.md",
+      "page": 55,
+      "sha256": "de9bf0da1966492781c94bca7e0347e30b5d1abcca7c335951ddbf8bde583d05",
+      "raw_text_sha256": "10b80d826f3ee673891443abcaabe98bb9bc907570287b072780fca5fc2d11a5",
+      "transcription": ""
+    },
+    "example-p056": {
+      "snapshot": "sources/example-p056.md",
+      "page": 56,
+      "sha256": "abc9f57ec78ebd18d9e31cbcf8a9a58f762e1f15ef75a919cda5396212e4eb03",
+      "raw_text_sha256": "b45e83b0147add02ec89b3a10fcf2363ce556dcd2b1e08fc95782f1de62fc8d7",
+      "transcription": ""
+    },
+    "example-p057": {
+      "snapshot": "sources/example-p057.md",
+      "page": 57,
+      "sha256": "53752e5008616c1bfbb0dd77fd1d08250c7be672e414c16c8b7dd127aa29a617",
+      "raw_text_sha256": "60c00ebe605ea8bef3bfd17cba4e3d928b132b02c42c1722bb0bfa409646bea4",
+      "transcription": ""
+    },
+    "example-p060": {
+      "snapshot": "sources/example-p060.md",
+      "page": 60,
+      "sha256": "f0cd87b95de76ff905df6574eeb512fb0ec8cf4decc8067352dd720119a751f4",
+      "raw_text_sha256": "c3fdf8f5af921e573e63ea5e613a027bcd17ed5e3aa6e8086af4585bc1f38926",
+      "transcription": ""
+    },
+    "example-p063": {
+      "snapshot": "sources/example-p063.md",
+      "page": 63,
+      "sha256": "dcfd7b35f5c6ef8b8b78e7c4fe9787199fc594bc7c56caf62e2214079979318b",
+      "raw_text_sha256": "6be57418a5c52be5bd2b4349ec559151bf56f721c35fcd8d644eb500eeba7240",
+      "transcription": ""
+    },
+    "example-p070": {
+      "snapshot": "sources/example-p070.md",
+      "page": 70,
+      "sha256": "5ea8f489b6743e5f1d098fa2df4251e2467a507ce2fcfd8294a2afd4b5052f3b",
+      "raw_text_sha256": "9fc9d08185f512e9a353d201732d393f34f122bd1494e099845d7550ce722f72",
+      "transcription": ""
+    },
+    "example-p082": {
+      "snapshot": "sources/example-p082.md",
+      "page": 82,
+      "sha256": "61057c1c2a6bebbb6af1efc5f03526704329566a80414c8d4fd08d27056aa85c",
+      "raw_text_sha256": "e84a0f914a9be3cadd169e350c441dd5ba97a7303d2896e842746b4984737592",
+      "transcription": ""
+    }
+  }
+}

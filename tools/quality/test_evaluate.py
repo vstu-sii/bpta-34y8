@@ -171,5 +171,106 @@ class TraceabilityTests(unittest.TestCase):
             evaluate.validate_text_encoding(self.rows[0])
 
 
+class SourceEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.rows = evaluate.read_jsonl(evaluate.DATA / "cases.jsonl")
+        self.registry = json.loads(
+            (evaluate.DATA / "source-registry.json").read_text("utf-8")
+        )
+        self.audit = json.loads(
+            (evaluate.DATA / "source-audit.json").read_text("utf-8")
+        )
+        self.snapshots = {
+            key: (evaluate.DATA / doc["snapshot"]).read_bytes()
+            for key, doc in self.registry["documents"].items()
+        }
+
+    def check(self):
+        return evaluate.validate_source_evidence(
+            self.rows, self.registry, self.audit, self.snapshots
+        )
+
+    def test_all_references_have_evidence(self):
+        report = self.check()
+        self.assertEqual(report["audited_cases"], 40)
+        self.assertEqual(
+            report["source_kinds"],
+            {"pdf_excerpt": 30, "controlled_mutation": 10},
+        )
+
+    def test_changed_upstream_snapshot_rejected(self):
+        self.snapshots["example-p011"] += b"changed"
+        with self.assertRaisesRegex(ValueError, "Source checksum"):
+            self.check()
+
+    def test_missing_case_audit_rejected(self):
+        self.audit["cases"].pop()
+        with self.assertRaisesRegex(ValueError, "Missing audit case"):
+            self.check()
+
+    def test_changed_rationale_rejected(self):
+        self.audit["cases"][0]["finding"] = "Unsubstantiated claim"
+        with self.assertRaisesRegex(ValueError, "Audit finding"):
+            self.check()
+
+    def test_forged_upstream_quote_rejected(self):
+        self.rows[0]["provenance"]["quote"] = "Not in the repository document"
+        with self.assertRaisesRegex(ValueError, "Repository quote"):
+            self.check()
+
+    def test_undeclared_source_edit_rejected(self):
+        self.rows[0]["input"]["source"]["text"] += " Undeclared addition"
+        with self.assertRaisesRegex(ValueError, "Source transformation"):
+            self.check()
+
+
+class RubricTests(unittest.TestCase):
+    def test_complete_paraphrase_gets_full_score(self):
+        self.assertEqual(
+            evaluate.grade_points(
+                ["specialization", "pipeline"], ["pipeline", "specialization"], []
+            ),
+            (2, "correct"),
+        )
+
+    def test_omission_gets_partial_credit(self):
+        self.assertEqual(
+            evaluate.grade_points(
+                ["precision", "throughput", "resources"],
+                ["precision", "throughput"],
+                [],
+            ),
+            (1, "partially_correct"),
+        )
+
+    def test_factual_contradiction_overrides_coverage(self):
+        self.assertEqual(
+            evaluate.grade_points(["DMA"], ["DMA"], ["CPU must copy every word"]),
+            (0, "incorrect"),
+        )
+
+    def test_invented_matched_point_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Unknown or duplicate"):
+            evaluate.grade_points(["precision"], ["arbitrary claim"], [])
+
+    def test_missing_judgment_rejected(self):
+        rows = evaluate.read_jsonl(evaluate.DATA / "cases.jsonl")
+        judgments = json.loads(
+            (evaluate.DATA / "answer-judgments.json").read_text("utf-8")
+        )
+        judgments["answers"].pop()
+        with self.assertRaisesRegex(ValueError, "Missing answer judgment"):
+            evaluate.validate_answer_judgments(rows, judgments)
+
+    def test_unsupported_full_score_rejected(self):
+        rows = evaluate.read_jsonl(evaluate.DATA / "cases.jsonl")
+        judgments = json.loads(
+            (evaluate.DATA / "answer-judgments.json").read_text("utf-8")
+        )
+        next(row for row in judgments["answers"] if row["id"] == "GD-035")["score"] = 2
+        with self.assertRaisesRegex(ValueError, "Rubric score"):
+            evaluate.validate_answer_judgments(rows, judgments)
+
+
 if __name__ == "__main__":
     unittest.main()

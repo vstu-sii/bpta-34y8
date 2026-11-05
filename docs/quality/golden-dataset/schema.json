@@ -20,7 +20,7 @@
       "pattern": "^GD-[0-9]{3}$"
     },
     "version": {
-      "const": "1.1.0"
+      "const": "2.0.0"
     },
     "task": {
       "enum": [
@@ -48,18 +48,44 @@
       "required": [
         "kind",
         "author",
-        "rights"
+        "rights",
+        "document",
+        "quote",
+        "transformation"
       ],
       "properties": {
         "kind": {
-          "const": "synthetic"
+          "enum": [
+            "pdf_excerpt",
+            "controlled_mutation"
+          ]
         },
         "author": {
-          "const": "Quality & Safety / agent-assisted draft"
+          "const": "Quality & Safety"
         },
         "rights": {
           "type": "string",
           "minLength": 1
+        },
+        "document": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "transformation": {
+          "enum": [
+            "none",
+            "source_injection",
+            "question_injection",
+            "answer_injection",
+            "markup_injection",
+            "duplicate_and_whitespace",
+            "conflicting_claim",
+            "instruction_only"
+          ]
         }
       }
     },
@@ -167,6 +193,11 @@
             "accepted",
             "rejected"
           ]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
         }
       }
     },
@@ -175,7 +206,7 @@
       "minLength": 1
     },
     "review_status": {
-      "const": "pending_human_review"
+      "const": "source_audited"
     }
   },
   "allOf": [
@@ -228,7 +259,8 @@
           "expected": {
             "required": [
               "status",
-              "binary_label"
+              "binary_label",
+              "score"
             ]
           }
         }

@@ -1,1 +1,4 @@
 /docs/quality/golden-dataset/cases.jsonl text eol=lf
+/docs/quality/golden-dataset/sources/*.md text eol=lf
+/docs/quality/golden-dataset/sources/example-pages.json text eol=lf
+/docs/experiments/materials/Example.pdf binary

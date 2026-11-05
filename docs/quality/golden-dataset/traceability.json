@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "dataset_version": "1.1.0",
+  "dataset_version": "2.0.0",
   "source": "docs/use-cases/README.md",
   "branches": [
     {

@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "cases": 40,
-  "sha256": "ed3333ff8ab769d249ec49259d537c0ea87c82e5fb4750bdbfedd6071ae07d40",
+  "sha256": "92718135be005646ef9924fcfe5afdb34e79ae4ac5ba2e41b31b7a596a087d3a",
   "tasks": {
     "generate": 16,
     "abstain": 4,
@@ -40,7 +40,18 @@
       "exception": 5
     }
   },
-  "reference_review": "pending human review; agent-assisted repaired fixtures",
+  "reference_audit": {
+    "audited_cases": 40,
+    "source_kinds": {
+      "pdf_excerpt": 30,
+      "controlled_mutation": 10
+    },
+    "pdf_sha256": "b39259bac2eead660cac01010412d40a0560f105330a6881e50529528ad1afb9"
+  },
+  "answer_rubric": {
+    "answers": 20,
+    "max_score": 2
+  },
   "scope": "Dataset/schema/contract fixtures only; no model or product tests",
-  "checked_at": "2026-11-05T18:17:06.472856+00:00"
+  "checked_at": "2026-11-05T20:50:02.946703+00:00"
 }

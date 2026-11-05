@@ -1,8 +1,13 @@
 {
-  "version": "1.1.0",
+  "version": "2.0.0",
   "file": "cases.jsonl",
-  "sha256": "ed3333ff8ab769d249ec49259d537c0ea87c82e5fb4750bdbfedd6071ae07d40",
+  "sha256": "92718135be005646ef9924fcfe5afdb34e79ae4ac5ba2e41b31b7a596a087d3a",
   "cases": 40,
-  "source": "Original synthetic agent-assisted fixtures, repaired 2026-11-05; supersedes corrupted 1.0.0",
-  "review": "pending human review; not independently verified"
+  "source": "Example.pdf, 180 pages, VolgGTU 2013; exact page references and declared controlled mutations",
+  "review": "source_and_rubric_audit completed",
+  "annotation_method": "Source-grounded synthetic questions, reference answers and student-response fixtures",
+  "source_registry": "source-registry.json",
+  "audit": "source-audit.json",
+  "judgments": "answer-judgments.json",
+  "difficulty": "above_average"
 }
