@@ -21,13 +21,14 @@ def main():
     # Only this newly created project can be removed in the finally block.
     project = "bpta-delivery-check-" + uuid.uuid4().hex[:10]
     env = dict(os.environ, APP_PORT=str(free_port()), WEB_PORT=str(free_port()))
+    env.pop("POSTGRES_PASSWORD", None)
     compose = [
         "docker",
         "compose",
         "--project-name",
         project,
         "--env-file",
-        ".env.example",
+        os.devnull,
         "-f",
         "compose.dev.yml",
     ]
@@ -36,6 +37,26 @@ def main():
         return subprocess.run(
             [*compose, *args], cwd=ROOT, env=env, check=True, **kwargs
         )
+
+    # Ignore any personal .env: reproduce a fresh checkout with no credentials.
+    # Validate both entrypoints and Compose's unset/empty/override semantics.
+    for filename in ("compose.dev.yml", "compose.yml"):
+        for password in (None, "", "delivery-check-override"):
+            config_env = dict(env)
+            if password is not None:
+                config_env["POSTGRES_PASSWORD"] = password
+            result = subprocess.run(
+                [*compose[:-1], filename, "config", "--format", "json"],
+                cwd=ROOT,
+                env=config_env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            config = json.loads(result.stdout)
+            assert config["services"]["db"]["environment"]["POSTGRES_PASSWORD"] == (
+                password or "local-dev-change-me"
+            ), (filename, "database password interpolation")
 
     try:
         run("config", "--quiet")
