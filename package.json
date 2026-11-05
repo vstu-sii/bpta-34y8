@@ -1,0 +1,14 @@
+{
+  "name": "bpta-delivery-design",
+  "private": true,
+  "version": "0.2.0",
+  "scripts": {
+    "check:architecture": "aact check",
+    "check:prototype": "node scripts/capture-prototype.cjs"
+  },
+  "devDependencies": {
+    "aact": "3.0.0-beta.29",
+    "playwright-core": "1.64.1"
+  },
+  "engines": {"node": ">=22"}
+}

@@ -1,25 +1,75 @@
 services:
+  web:
+    image: python:3.12-slim
+    working_dir: /site
+    command: ["python", "-m", "http.server", "8080", "--bind", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    volumes:
+      - ./frontend/prototype:/site:ro
+    networks: [frontend]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
-    image: python:3.12-slim
-    container_name: bpta-app-dev
-    working_dir: /app
-    volumes:
-      - ./:/app
-    env_file:
-      - .env
-    command: >
-      sh -c "echo 'Application development container is running' &&
-             tail -f /dev/null"
+    build: .
+    environment:
+      PORT: "8000"
+      APP_SERVICE: bpta-app-stub
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    networks: [frontend, backend, ai]
+    depends_on:
+      db:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   agent:
-    image: python:3.12-slim
-    container_name: bpta-agent-dev
-    working_dir: /app
+    build: .
+    environment:
+      PORT: "8000"
+      APP_SERVICE: bpta-agent-stub
+    networks:
+      ai:
+        aliases: [ai-service]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bpta
+      POSTGRES_DB: bpta
+      # Local lab database only; no host port is published. Override via .env.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-change-me}
     volumes:
-      - ./:/app
-    env_file:
-      - .env
-    command: >
-      sh -c "echo 'AI agent development container is running' &&
-             tail -f /dev/null"
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bpta -d bpta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  frontend:
+  backend:
+    internal: true
+  ai:
+
+volumes:
+  postgres_data:

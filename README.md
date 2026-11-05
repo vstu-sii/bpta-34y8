@@ -44,6 +44,14 @@
 - `docs/experiments/` — описания и код экспериментов
 - `docs/quality/` — критерии успеха, черновик DoD и план эталонного набора данных
 - `docs/pictures/` — изображения для документации
+- `docs/architecture/`, `docs/adr/` — C4-диаграммы и архитектурные решения лабораторной 2
+- `aact.config.ts` — правила проверки архитектуры
+- `database/` — SQL-схема, ERD и заготовка миграций
+- `frontend/prototype/` — интерактивный прототип и скриншоты
+- `scripts/capture-prototype.cjs` — проверка и съёмка прототипа в Edge
+- `api/openapi.yaml` — канонический AI-контракт; `docs/api/openapi.yaml` — совместимая копия
+- `package.json`, `package-lock.json` — зафиксированные aact и Playwright
+- `scripts/check-delivery.py`, `scripts/check-compose.py` — проверки комплекта и изолированного стека
 - `config/` — конфигурационные файлы
 - `.github/` — шаблоны и настройки GitHub
 - `.github/PULL_REQUEST_TEMPLATE.md` — шаблон описания Pull Request
@@ -72,22 +80,48 @@
 В репозитории находится файл `.env.example`, содержащий шаблон необходимых
 переменных окружения.
 
-После клонирования репозитория необходимо создать локальный файл `.env`.
+Dev-окружение запускается после клонирования без `.env`. Для изменения настроек
+можно создать локальный файл `.env`.
 
 Для PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
+
+`POSTGRES_PASSWORD` можно переопределить в `.env`. Если переменная отсутствует
+или пуста, Compose использует учебный пароль `local-dev-change-me`.
+Он предназначен только для локальной БД, порт которой не публикуется на хост.
+Для лабораторной 2 добавлены `WEB_PORT=8080` и `APP_PORT=8000`;
+при отсутствии этих переменных используются указанные значения по умолчанию.
 ### Запуск dev-окружения
 
 Запуск выполняется командой
 
 ```powershell
-docker compose -f compose.dev.yml up -d
+docker compose -f compose.dev.yml up -d --wait
 ```
 
 Также доступен запуск через стандартный `compose.yml`: `docker compose up -d`.
+
+Для проверки без изменения существующего `.env`:
+`docker compose --env-file .env.example -f compose.dev.yml up -d --build --wait`.
+Пароль из примера — только для локальной учебной БД; наружу её порт не публикуется.
+
+Прототип доступен на http://localhost:8080, API-заглушка — на
+http://localhost:8000/health. AI-сервис и PostgreSQL доступны только внутри
+сетей Compose. API и AI пока не реализуют бизнес-операции и не подключаются
+к БД или модели. Начальная схема применяется только к пустому volume.
+
+Проверка архитектуры: `npm ci --ignore-scripts`, `npm run check:architecture`
+(Node.js 22+). Прототип: `npm run check:prototype` (Edge в Windows).
+Проверка изолированного Compose и 10 SQL-условий: `python scripts/check-compose.py`.
+Она создаёт отдельные контейнеры/БД на свободных портах и удаляет только их.
+Статическая сверка: `python -m pip install -r scripts/requirements.txt`,
+`python scripts/check-delivery.py`.
+Описание проекта архитектуры и открытых согласований —
+[docs/architecture/README.md](docs/architecture/README.md).
+Полный отчёт Delivery: [docs/architecture/delivery-report.md](docs/architecture/delivery-report.md).
 
 проверка состояния сервисов:
 

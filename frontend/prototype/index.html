@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>БПТА — повторение по конспекту</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="#upload">БПТА<span>Учиться с пониманием</span></a><span class="badge">Демонстрационный прототип</span></header>
+  <div class="layout">
+    <nav aria-label="Разделы">
+      <p class="eyebrow">МОЯ ПОДГОТОВКА</p>
+      <a href="#upload">01 · Материалы</a>
+      <a href="#approve">02 · Проверка карточек</a>
+      <a href="#review">03 · Повторить сегодня</a>
+      <p class="note">Данные только в памяти страницы. Модель и сервер не вызываются.</p>
+    </nav>
+    <main>
+      <section id="upload" class="screen">
+        <p class="eyebrow">ОТ КОНСПЕКТА К ЗНАНИЯМ</p>
+        <h1>Начни с материала.<br>Оставь главное.</h1>
+        <p class="lead">Добавь конспект и вопросы к зачёту. Перед повторением проверь каждую карточку по источнику.</p>
+        <form id="upload-form" class="panel">
+          <label for="title">Название материала</label>
+          <input id="title" required value="Память и обучение">
+          <label for="lecture">Текст конспекта</label>
+          <textarea id="lecture" required rows="5">Активное воспроизведение — попытка вспомнить материал без подсказки. Интервальное повторение распределяет повторения во времени. Это помогает удерживать изученное в долговременной памяти.</textarea>
+          <label for="questions">Вопросы к зачёту</label>
+          <textarea id="questions" required rows="2">Что такое активное воспроизведение?</textarea>
+          <p class="note">В этой версии используется текст. PDF и OCR появятся после согласования.</p>
+          <button type="submit">Посмотреть пример карточки →</button>
+        </form>
+      </section>
+      <section id="approve" class="screen" hidden>
+        <p class="eyebrow">ПРОВЕРКА ПЕРЕД ПОВТОРЕНИЕМ</p><h1>Сначала убедись<br>в точности.</h1>
+        <p class="lead">Демонстрационная карточка из примера, без генерации моделью.</p>
+        <div class="columns"><article class="panel">
+          <span class="badge" id="card-status">Черновик</span>
+          <label for="card-question">Вопрос</label><input id="card-question" value="Что такое активное воспроизведение?" required>
+          <label for="card-answer">Эталонный ответ</label><textarea id="card-answer" rows="4" required>Попытка вспомнить материал без подсказки.</textarea>
+          <div class="actions"><button id="accept">Принять карточку</button><button id="delete" class="secondary">Удалить</button></div>
+          <p class="note">Можно исправить вопрос и ответ перед принятием.</p>
+        </article><aside class="panel source"><p class="eyebrow">ИСТОЧНИК · АБЗАЦ 1</p><h2 id="source-title">Память и обучение</h2><blockquote id="source-text"></blockquote><p class="note">Сверь ответ с конспектом. Модель может ошибаться.</p></aside></div>
+      </section>
+      <section id="review" class="screen" hidden>
+        <p class="eyebrow">НЕБОЛЬШОЙ ШАГ КАЖДЫЙ ДЕНЬ</p><h1>Вспомни своими<br>словами.</h1>
+        <p class="lead" id="review-summary">Сначала прими карточку на экране проверки.</p>
+        <article class="panel" id="review-card" hidden>
+          <span class="badge">Самооценка · без модели</span><h2 id="review-question"></h2>
+          <label for="student-answer">Твой ответ</label><textarea id="student-answer" rows="4" placeholder="Попробуй ответить, не подглядывая"></textarea>
+          <button id="reveal">Показать эталон</button>
+          <div id="reference" hidden><h3>Сравни с эталоном</h3><p id="reference-answer"></p><div class="actions"><button data-grade="correct">Верно</button><button data-grade="partial" class="secondary">Частично</button><button data-grade="incorrect" class="secondary">Неверно</button></div></div>
+        </article>
+      </section>
+      <p id="feedback" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+</body>
+</html>
