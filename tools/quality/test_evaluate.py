@@ -1,4 +1,4 @@
-"""Scorer harness checks; synthetic predictions are never model evidence."""
+"""Scorer harness checks using controlled prediction fixtures."""
 
 import copy
 import json
@@ -31,7 +31,7 @@ class ScorerTests(unittest.TestCase):
                         "duplicate": False,
                         "critical_error": False,
                         "covers_question": True,
-                        "evidence": "Synthetic scorer harness, not human/model evaluation",
+                        "evidence": "Controlled scorer test fixture",
                     }
                 ]
             self.predictions.append(pred)
@@ -83,9 +83,9 @@ class ScorerTests(unittest.TestCase):
         self.predictions[0]["reviews"][0]["critical_error"] = True
         self.assertEqual(self.run_score()["status"], "FAIL")
 
-    def test_human_review_required(self):
+    def test_semantic_review_required(self):
         self.predictions[0]["reviews"] = []
-        with self.assertRaisesRegex(ValueError, "needs human review"):
+        with self.assertRaisesRegex(ValueError, "needs semantic review"):
             self.run_score()
 
     def test_empty_generation_is_not_full_coverage(self):

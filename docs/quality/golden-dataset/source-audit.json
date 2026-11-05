@@ -2,7 +2,7 @@
   "dataset_version": "2.0.0",
   "dataset_sha256": "92718135be005646ef9924fcfe5afdb34e79ae4ac5ba2e41b31b7a596a087d3a",
   "method": "source_and_rubric_audit",
-  "performed_by": "Codex",
+  "provenance_record": "README.md",
   "cases": [
     {
       "id": "GD-001",

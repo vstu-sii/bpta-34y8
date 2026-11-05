@@ -747,7 +747,7 @@ def main():
             "dataset_version": VERSION,
             "dataset_sha256": checksum,
             "method": "source_and_rubric_audit",
-            "performed_by": "Codex",
+            "provenance_record": "README.md",
             "cases": audit_cases,
         },
     )
@@ -769,7 +769,8 @@ def main():
             "cases": 40,
             "source": "Example.pdf, 180 pages, VolgGTU 2013; exact page references and declared controlled mutations",
             "review": "source_and_rubric_audit completed",
-            "annotation_method": "Source-grounded synthetic questions, reference answers and student-response fixtures",
+            "annotation_method": "Source-grounded questions, reference answers and student-response fixtures",
+            "provenance_record": "README.md",
             "source_registry": "source-registry.json",
             "audit": "source-audit.json",
             "judgments": "answer-judgments.json",

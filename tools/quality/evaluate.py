@@ -463,7 +463,7 @@ def score(rows, path):
             reviews = pred.get("reviews")
             require(
                 isinstance(reviews, list) and len(reviews) == len(cards),
-                f"Each generated card needs human review {row['id']}",
+                f"Each generated card needs semantic review {row['id']}",
             )
             case_covered = False
             for card, review in zip(cards, reviews, strict=True):
@@ -538,7 +538,7 @@ def score(rows, path):
         "critical_errors": critical,
         "system_errors": errors,
         "issues": evidence,
-        "scope": "Recorded predictions and supplied human reviews; no model execution",
+        "scope": "Recorded predictions and supplied rubric assessments; no model execution",
     }
 
 
