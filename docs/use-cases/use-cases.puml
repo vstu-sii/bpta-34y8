@@ -1,0 +1,23 @@
+@startuml
+left to right direction
+actor "Студент" as student
+rectangle "Карточки для повторения — проект QS-UC" {
+  usecase "QS-UC-01\nПолучить карточку по источнику" as card
+  usecase "QS-UC-02\nСохранить формулу и обозначения" as formula
+  usecase "QS-UC-03\nПолучить обоснованный отказ" as abstain
+  usecase "QS-UC-04\nОценить свободный ответ" as evaluate
+  usecase "QS-UC-05\nОбработать недоверенные данные" as safe
+}
+student --> card
+student --> formula
+student --> abstain
+student --> evaluate
+formula ..> card : <<extend>>
+abstain ..> card : <<extend>>
+card ..> safe : <<include>>
+evaluate ..> safe : <<include>>
+note bottom of safe
+Проект: review Product и проживание ожидаются.
+Модель не получает право исполнять команды.
+end note
+@enduml

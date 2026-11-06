@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "task",
+    "category",
+    "uc_id",
+    "provenance",
+    "input",
+    "expected",
+    "rationale",
+    "review_status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^GD-[0-9]{3}$"
+    },
+    "version": {
+      "const": "2.0.0"
+    },
+    "task": {
+      "enum": [
+        "generate",
+        "abstain",
+        "evaluate"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uc_id": {
+      "enum": [
+        "QS-UC-01",
+        "QS-UC-02",
+        "QS-UC-03",
+        "QS-UC-04",
+        "QS-UC-05"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "author",
+        "rights",
+        "document",
+        "quote",
+        "transformation"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "pdf_excerpt",
+            "controlled_mutation"
+          ]
+        },
+        "author": {
+          "const": "Quality & Safety"
+        },
+        "rights": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "transformation": {
+          "enum": [
+            "none",
+            "source_injection",
+            "question_injection",
+            "answer_injection",
+            "markup_injection",
+            "duplicate_and_whitespace",
+            "conflicting_claim",
+            "instruction_only"
+          ]
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "exam_question"
+      ],
+      "properties": {
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chunk_id",
+            "source_locator",
+            "source_page",
+            "text"
+          ],
+          "properties": {
+            "chunk_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "source_locator": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 5000
+            }
+          }
+        },
+        "exam_question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference_answer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_fragment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "student_answer": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "required_points"
+      ],
+      "properties": {
+        "action": {
+          "enum": [
+            "generate",
+            "abstain",
+            "evaluate"
+          ]
+        },
+        "required_points": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 4
+        },
+        "card": {
+          "type": "object"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "correct",
+            "partially_correct",
+            "incorrect"
+          ]
+        },
+        "binary_label": {
+          "enum": [
+            "accepted",
+            "rejected"
+          ]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        }
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_status": {
+      "const": "source_audited"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "generate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expected": {
+            "required": [
+              "card"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "abstain"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expected": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "evaluate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expected": {
+            "required": [
+              "status",
+              "binary_label",
+              "score"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "evaluate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "required": [
+              "question",
+              "reference_answer",
+              "source_fragment",
+              "student_answer"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
