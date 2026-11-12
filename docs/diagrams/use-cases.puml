@@ -1,0 +1,32 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Студент" as student
+actor "Ollama Cloud" as cloud
+actor "Ollama Local" as local
+
+rectangle "Система подготовки к зачёту с ИИ" {
+  usecase "Загрузка конспекта и списка вопросов по зачёту" as UC01
+  usecase "Формирование набора карточек по вопросам" as UC02
+  usecase "Приёмка и редактирование карточек" as UC03
+  usecase "Сессия повторения (кривая забывания)" as UC04
+  usecase "Оценка свободного ответа студента" as UC05
+  usecase "Просмотр прогресса усвоения" as UC06
+}
+
+student --> UC01
+student --> UC02
+student --> UC03
+student --> UC04
+student --> UC06
+
+UC04 ..> UC05 : <<include>>
+UC03 ..> UC02 : <<extend>>\n("Сформировать заново")
+
+UC02 --> cloud
+UC02 --> local
+UC05 --> cloud
+UC05 --> local
+
+@enduml
