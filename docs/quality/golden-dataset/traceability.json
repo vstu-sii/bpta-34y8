@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "dataset_version": "2.0.0",
-  "source": "docs/use-cases/README.md",
+  "source": "docs/quality/golden-dataset/README_QS_UC.md",
   "branches": [
     {
       "id": "QS-UC-01-M1",
