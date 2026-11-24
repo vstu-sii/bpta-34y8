@@ -1,0 +1,271 @@
+@startuml
+autonumber
+title БПТА — Sequence Diagrams: UC-04 .. UC-06 (Повторение и прогресс)
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 40
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceGroupBorderColor #e32636
+
+box "User" #f8f6d3
+actor "Студент" as student #5eb2f3
+end box
+box "GUI" #d3e8f8
+boundary "Интерфейс" as web #5eb2f3
+end box
+box "System" #e4f8d3
+participant "API приложения" as app #5eb2f3
+database "БД приложения" as db #5eb2f3
+participant "AI-сервис" as agent #5eb2f3
+end box
+box "LLM" #f8d3d3
+participant "Провайдер модели" as llm #5eb2f3
+end box
+
+== UC-04. Сессия повторения (кривая забывания) ==
+
+student -> web : Нажимает «Начать повторение»
+activate web
+
+web -> app : POST /api/v1/review-sessions\n{document_id}
+activate app
+
+app -> db : SELECT card JOIN review_schedule\nWHERE due <= now() AND status='accepted'\nORDER BY priority DESC
+activate db
+db --> app : queue[] (cards с расписанием)
+deactivate db
+
+app --> web : 200 OK\n{session_id, queue_size, first_card}
+deactivate app
+
+web --> student : Отображает первую карточку\n(вопрос, тип, страница; цитата скрыта)
+deactivate web
+
+loop Пока есть карточки в очереди на сегодня
+  student -> web : Вводит текстовый ответ
+  activate web
+  web --> student : Показывает поле ввода и кнопку «Проверить ответ»
+
+  student -> web : Нажимает «Проверить ответ»
+  web -> app : POST /api/v1/reviews\n{card_id, student_answer}
+  activate app
+
+  == UC-05: Оценка свободного ответа (подпроцесс) ==
+  group "UC-05. Оценка свободного ответа студента" 
+    app -> agent : POST /ai/v1/answers/evaluate\n{card_id, question, reference_answer,\nsource_fragment, required_points,\nstudent_answer}
+    activate agent
+
+    agent -> llm : POST /api/generate\n(промпт с эталоном и ответом студента)
+    activate llm
+    llm --> agent : JSON: status, explanation,\nmatched_points, missing_points,\nfactual_errors, confidence,\nrequires_self_check
+    deactivate llm
+
+    agent -> agent : Валидация JSON и схемы
+
+    alt Высокая уверенность модели
+      agent --> app : 200 OK\n{status, explanation, confidence,\nrequires_self_check=false}
+    else Низкая уверенность (requires_self_check=true)
+      agent --> app : 200 OK\n{status, explanation,\nrequires_self_check=true}
+    end
+    deactivate agent
+  
+  == Конец подпроцесса UC-05 ==
+
+  alt Оценка окончательная (confidence высокая)
+    app -> db : INSERT INTO review\n{card_id, student_answer, model_result,\nmodel_confidence, requires_self_check}
+    app -> db : UPDATE review_schedule\n(пересчёт следующего показа по FSRS)
+    db --> app : OK
+    app --> web : 200 OK\n{status, explanation, matched_points,\nmissing_points, next_review_at}
+  else Требуется самооценка
+    app --> web : 200 OK\n{requires_self_check=true,\nexplanation, reference_answer}
+    web --> student : Показывает эталон и просит\nоценить себя: «Знал» / «Не знал»
+
+    student -> web : Выбирает самооценку
+    web -> app : POST /api/v1/reviews/{id}/self-assess\n{student_result}
+    activate app
+    app -> db : INSERT INTO review\n{assessed_by='student', result}
+    app -> db : UPDATE review_schedule
+    db --> app : OK
+    app --> web : 200 OK\n{next_review_at}
+    deactivate app
+  end
+  deactivate app
+
+  web --> student : Показывает результат оценки,\nобъяснение и эталонный ответ
+  deactivate web
+
+  student -> web : Нажимает «Далее»
+  activate web
+  web -> app : GET /api/v1/review-sessions/{id}/next
+  activate app
+  app -> db : SELECT следующая карточка из очереди
+  db --> app : card или null
+  deactivate db
+
+  alt Есть следующая карточка
+    app --> web : 200 OK\n{card}
+    web --> student : Отображает следующую карточку
+  else Очередь исчерпана
+    app --> web : 200 OK\n{session_completed: true}
+    web --> student : Показывает сводку сессии:\nпройдено карточек, закрыто,\nтребует внимания
+  end
+  deactivate web
+end
+
+student -> web : Нажимает «Завершить сессию»
+web --> student : Переход к экрану прогресса (UC-06)
+
+== UC-05. Оценка свободного ответа студента (детализация) ==
+
+note over student, llm
+  Этот сценарий запускается из UC-04
+  при нажатии «Проверить ответ»
+end note
+
+student -> web : Нажимает «Проверить ответ»
+activate web
+web -> app : POST /api/v1/reviews\n{card_id, student_answer}
+activate app
+
+app -> db : SELECT card, source_chunk\nWHERE card_id = ?
+activate db
+db --> app : card {question, reference_answer,\nsource_quote, required_points}
+deactivate db
+
+app -> agent : POST /ai/v1/answers/evaluate\n{card_id, question, reference_answer,\nsource_fragment, required_points,\nstudent_answer}
+activate agent
+
+agent -> agent : Формирует промпт:\nсистемная инструкция + вопрос +\nэталон + цитата + пункты + ответ студента
+
+agent -> llm : POST /api/generate\n(облачная gemma4:31b)
+activate llm
+
+alt Модель доступна и ответ валиден
+  llm --> agent : JSON: {status, explanation,\nmatched_points, missing_points,\nfactual_errors, confidence,\nrequires_self_check}
+  deactivate llm
+
+  agent -> agent : Валидация JSON и схемы
+
+  alt Confidence >= порога
+    agent --> app : 200 OK\n{status: "correct"|"partially_correct"|"incorrect",\nexplanation, confidence,\nrequires_self_check: false}
+  else Confidence < порога
+    agent --> app : 200 OK\n{status, explanation,\nrequires_self_check: true}
+  end
+
+else Таймаут / HTTP 429 / 5xx
+  llm --> agent : Ошибка или таймаут
+  deactivate llm
+
+  agent -> agent : Повтор (не более 2 попыток)
+
+  alt Повтор успешен
+    agent -> llm : POST /api/generate (повтор)
+    activate llm
+    llm --> agent : JSON с оценкой
+    deactivate llm
+    agent --> app : 200 OK (оценка)
+  else Все попытки исчерпаны
+    agent --> app : 503 Service Unavailable\n{error: "model_unavailable"}
+  end
+
+else Ошибка авторизации 401/403
+  llm --> agent : 401/403
+  deactivate llm
+  agent --> app : 401 Unauthorized\n(ошибка конфигурации)
+end
+deactivate agent
+
+alt Модель недоступна (503) или низкая уверенность
+  app -> db : INSERT INTO quality_event\n{type: "model_unavailable"|"low_confidence",\ncard_id}
+  app --> web : 200 OK\n{requires_self_check: true,\nexplanation: "Модель недоступна",\nreference_answer}
+else Оценка получена
+  app -> db : INSERT INTO review\n{card_id, student_answer, model_result,\nmodel_confidence, requires_self_check,\nmatched_points, missing_points}
+  app -> db : UPDATE review_schedule\n(пересчёт интервала по FSRS)
+  app --> web : 200 OK\n{status, explanation, matched_points,\nmissing_points, factual_errors,\nnext_review_at}
+end
+deactivate app
+
+alt Требуется самооценка (requires_self_check=true)
+  web --> student : Показывает эталонный ответ,\nобъяснение модели и кнопки\n«Знал» / «Не знал»
+
+  student -> web : Выбирает «Знал» или «Не знал»
+  web -> app : POST /api/v1/reviews/{id}/self-assess\n{student_result: "correct"|"incorrect"}
+  activate app
+  app -> db : UPDATE review SET\nassessed_by='student',\nresult=student_result
+  app -> db : UPDATE review_schedule\n(на основе самооценки)
+  app -> db : INSERT INTO quality_event\n{type: "self_assessment", card_id}
+  db --> app : OK
+  app --> web : 200 OK\n{next_review_at}
+  deactivate app
+  web --> student : Показывает следующую карточку
+end
+
+deactivate web
+
+== UC-06. Просмотр прогресса усвоения ==
+
+student -> web : Открывает вкладку «Прогресс»
+activate web
+
+web -> app : GET /api/v1/documents/{id}/progress
+activate app
+
+app -> db : SELECT COUNT(card) по статусам\n(accepted, pending, deleted)
+activate db
+db --> app : counts
+deactivate db
+
+app -> db : SELECT DISTINCT card_id, last_review_result,\ncycles_count FROM review_schedule
+activate db
+db --> app : cards_status[]
+deactivate db
+
+app -> db : SELECT AVG(cycles_to_close)\nFROM completed_sessions
+activate db
+db --> app : avg_cycles (North Star Metric)
+deactivate db
+
+app --> web : 200 OK\n{total_cards, accepted, pending,\nmastered, needs_attention, not_started,\navg_cycles_to_close, questions[]}
+deactivate app
+
+web --> student : Отображает сводку:\n- Общее количество карточек\n- Пройдено циклов\n- Процент усвоения\n- Ожидаемое число циклов до закрытия\n- Список вопросов с цветовой индикацией\n  (🟢 усвоено / 🟡 требует внимания / ⚪ не начато)
+deactivate web
+
+alt Студент фильтрует список
+  student -> web : Выбирает фильтр «Требует внимания»
+  web -> app : GET /api/v1/documents/{id}/progress?status=needs_attention
+  activate app
+  app -> db : SELECT cards WHERE last_result != 'correct'
+  db --> app : filtered_cards[]
+  deactivate db
+  app --> web : 200 OK\n{filtered_cards}
+  deactivate app
+  web --> student : Показывает только карточки,\nтребующие внимания
+
+else Студент открывает детали по вопросу
+  student -> web : Нажимает на конкретный вопрос
+  web -> app : GET /api/v1/cards/{id}/history
+  activate app
+  app -> db : SELECT review WHERE card_id = ?\nORDER BY created_at DESC
+  db --> app : reviews[] (даты, оценки, тексты)
+  deactivate db
+  app --> web : 200 OK\n{card, reviews[]}
+  deactivate app
+  web --> student : Показывает историю ответов:\nдаты сессий, оценки,\nтексты студента и эталоны
+
+else Студент переходит к повторению
+  student -> web : Нажимает «Продолжить повторение»
+  web -> app : POST /api/v1/review-sessions\n{document_id, priority: "needs_attention_first"}
+  activate app
+  app -> db : SELECT card FROM review_schedule\nWHERE due <= now()\nORDER BY priority DESC
+  db --> app : queue[]
+  deactivate db
+  app --> web : 200 OK\n{session_id, queue}
+  deactivate app
+  web --> student : Переход к сессии повторения (UC-04)\nс карточками «требует внимания» в начале очереди
+
+else Студент выходит
+  student -> web : Нажимает «Назад»
+  web --> student : Возврат на главную страницу
+end
+
+@enduml

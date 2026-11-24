@@ -36,15 +36,18 @@
 - `src/app/main.py` — точка входа приложения
 - `tests/` — тесты проекта
 - `docs/` — документация
+- `docs/api` — OAS-контракты
 - `docs/brief.md` — описание проблемы и проекта
 - `docs/prd.md` — продуктовые требования
 - `docs/research.md`, `docs/insights.md`, `docs/hypotheses.md` — исследование, выводы и гипотезы
 - `docs/glossary.md` — словарь терминов проекта
+- `docs/roadmap.md` — роадмап проекта с MVP-скоупом
 - `docs/model-candidates.md` — кандидаты моделей и их сравнение
 - `docs/experiments/` — описания и код экспериментов
 - `docs/quality/` — критерии успеха, черновик DoD и план эталонного набора данных
 - `docs/pictures/` — изображения для документации
-- `docs/architecture/`, `docs/adr/` — C4-диаграммы и архитектурные решения лабораторной 2
+- `docs/use-cases/` — варианты использования системы 
+- `docs/architecture/`, `docs/adr/` — C4-диаграммы и архитектурные решения
 - `aact.config.ts` — правила проверки архитектуры
 - `database/` — SQL-схема, ERD и заготовка миграций
 - `frontend/prototype/` — интерактивный прототип и скриншоты
