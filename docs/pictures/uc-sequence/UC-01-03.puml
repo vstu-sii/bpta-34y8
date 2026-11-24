@@ -1,0 +1,228 @@
+@startuml
+autonumber
+title БПТА — Sequence Diagrams: UC-01 .. UC-03 (Создание карточек)
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 40
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceGroupBorderColor #e32636
+
+box "User" #f8f6d3
+actor "Студент" as student #5eb2f3
+end box
+box "GUI" #d3e8f8
+boundary "Интерфейс" as web #5eb2f3
+end box
+box "System" #e4f8d3
+participant "API приложения" as app #5eb2f3
+database "БД приложения" as db #5eb2f3
+participant "AI-сервис" as agent #5eb2f3
+end box
+box "LLM" #f8d3d3
+participant "Провайдер модели" as llm #5eb2f3
+end box
+
+== UC-01. Загрузка конспекта и списка вопросов по зачёту ==
+
+student -> web : Выбирает файл конспекта (TXT/MD/PDF)\nи вводит/загружает список вопросов
+activate web
+
+web -> app : POST /api/v1/documents\n{file, questions}
+activate app
+
+app -> app : Проверяет формат, размер,\nизвлекает текст, нормализует,\nразбивает на фрагменты
+
+app -> db : INSERT INTO document, source_chunk,\nexam_question
+activate db
+db --> app : document_id, chunk_id[]
+deactivate db
+
+app --> web : 201 Created\n{document_id, questions}
+deactivate app
+
+web --> student : Отображает список распознанных\nвопросов и подтверждение загрузки
+deactivate web
+
+alt Студент редактирует список вопросов перед сохранением
+  student -> web : Вносит правки в список вопросов
+  web -> app : PATCH /api/v1/documents/{id}/questions\n{questions}
+  activate app
+  app -> db : UPDATE exam_question
+  db --> app : OK
+  app --> web : 200 OK
+  deactivate app
+  web --> student : Обновлённый список вопросов
+end
+
+student -> web : Нажимает «Продолжить»\n(переход к UC-02)
+activate web
+web --> student : Переход к экрану генерации
+deactivate web
+
+== UC-02. Формирование набора карточек по вопросам ==
+
+student -> web : Нажимает «Сформировать карточки»
+activate web
+
+web -> app : POST /ai/v1/card-generation-jobs\n{document_id, prompt_version, chunks, exam_questions}
+activate app
+
+app -> db : INSERT INTO generation_job (status='queued')
+activate db
+db --> app : job_id
+deactivate db
+
+app --> web : 202 Accepted\n{job_id, status: "queued"}
+deactivate app
+deactivate web
+
+loop Пока задание не завершено (интервал 2–5 сек)
+  student -> web : (интерфейс автоматически опрашивает)
+  activate web
+  web -> app : GET /ai/v1/card-generation-jobs/{job_id}
+  activate app
+  app -> db : SELECT generation_job, cards
+  activate db
+  db --> app : job + cards[]
+  deactivate db
+  app --> web : 200 OK\n{status, completed_chunks, total_chunks, cards}
+  deactivate app
+  web --> student : Обновляет индикатор прогресса\nпо каждому вопросу
+  deactivate web
+end
+
+activate app
+app -> db : SELECT source_chunk WHERE document_id = ?
+activate db
+db --> app : chunks[]
+deactivate db
+
+loop Для каждого фрагмента (chunk)
+  app -> agent : Передаёт chunk + prompt\n(HTTP/JSON ai-service:8000)
+  activate agent
+
+  alt Облачная модель доступна (gemma4:31b)
+    agent -> llm : POST /api/generate\n(gemma4:31b, Ollama Cloud)
+    activate llm
+    llm --> agent : JSON с карточками
+    deactivate llm
+  else Облако недоступно / квота исчерпана / таймаут
+    agent -> llm : POST /api/generate\n(qwen3.5:4b, локально)
+    activate llm
+    llm --> agent : JSON с карточками
+    deactivate llm
+  end
+
+  agent -> agent : Валидация JSON, проверка цитат,\nдедупликация по вопросу
+  agent --> app : Валидные карточки + chunk_errors
+  deactivate agent
+
+  app -> db : INSERT INTO card (approval_status='pending')\nдля каждой валидной карточки
+end
+
+app -> db : UPDATE generation_job SET status='completed'
+deactivate app
+
+web -> app : GET /ai/v1/card-generation-jobs/{job_id}
+activate app
+app -> db : SELECT job + cards
+db --> app : job (status='completed') + cards[]
+deactivate db
+app --> web : 200 OK\n{status: "completed", cards_count, chunk_errors}
+deactivate app
+
+web --> student : Итог: N карточек создано,\nM вопросов с ошибками.\nПредлагает перейти к приёмке (UC-03)
+
+== UC-03. Приёмка и редактирование карточек ==
+
+student -> web : Открывает экран приёмки карточек
+activate web
+
+web -> app : GET /api/v1/documents/{id}/cards?status=pending
+activate app
+app -> db : SELECT card JOIN source_chunk\nWHERE document_id=? AND status='draft'
+activate db
+db --> app : cards[] (question, answer, type, page, source_quote)
+deactivate db
+app --> web : 200 OK\n{cards: [...]}
+deactivate app
+
+web --> student : Отображает список карточек\n(вопрос, ответ, тип, страница, цитата)
+deactivate web
+
+loop Для каждой карточки
+  student -> web : Просматривает карточку
+  activate web
+
+  alt Принять карточку
+    student -> web : Нажимает «Принять»
+    web -> app : PATCH /api/v1/cards/{id}\n{approval_status: "accepted"}
+    activate app
+    app -> db : UPDATE card SET status='accepted'
+    db --> app : OK
+    app --> web : 200 OK
+    deactivate app
+    web --> student : Карточка добавлена в активную колоду
+
+  else Редактировать карточку
+    student -> web : Нажимает «Редактировать»,\nвносит правки в вопрос/ответ
+    web -> app : PATCH /api/v1/cards/{id}\n{question, answer}
+    activate app
+    app -> db : UPDATE card
+    db --> app : OK
+    app --> web : 200 OK
+    deactivate app
+    web --> student : Карточка обновлена\n(статус остаётся pending до принятия)
+
+  else Удалить карточку
+    student -> web : Нажимает «Удалить»
+    web -> app : DELETE /api/v1/cards/{id}
+    activate app
+    app -> db : UPDATE card SET status='deleted'
+    db --> app : OK
+    app --> web : 200 OK
+    deactivate app
+    web --> student : Карточка удалена из списка
+
+  else Перегенерировать карточку
+    student -> web : Нажимает «Сформировать заново»
+    web -> app : POST /ai/v1/cards/repair\n{source_chunk, rejected_card, validation_errors}
+    activate app
+
+    app -> agent : Передаёт карточку + коды ошибок
+    activate agent
+    agent -> llm : POST /api/generate\n(повторная генерация, max 2 попытки)
+    activate llm
+    llm --> agent : Исправленный JSON
+    deactivate llm
+    agent -> agent : Повторная валидация
+    agent --> app : {status: "repaired", card} или {status: "rejected"}
+    deactivate agent
+
+    alt Карточка исправлена
+      app -> db : INSERT/UPDATE card (status='pending')
+      app --> web : 200 OK\n{status: "repaired", card}
+    else Карточка не прошла после 2 попыток
+      app --> web : 422 Unprocessable\n{status: "rejected", remaining_errors}
+    end
+    deactivate app
+
+    web --> student : Показывает новую версию карточки\n(или сообщение об ошибке)
+
+  end
+
+  deactivate web
+end
+
+student -> web : Нажимает «Завершить приёмку»
+activate web
+web -> app : POST /api/v1/documents/{id}/finalize-review
+activate app
+app -> db : UPDATE generation_job SET status='completed'\nWHERE all cards processed
+db --> app : {accepted_count, pending_count}
+deactivate db
+app --> web : 200 OK\n{accepted_count, pending_count}
+deactivate app
+web --> student : Колода сформирована из принятых карточек.\nПредлагает перейти к повторению (UC-04)
+deactivate web
+
+@enduml
